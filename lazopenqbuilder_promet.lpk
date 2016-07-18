@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="4">
+    <PathDelim Value="\"/>
+    <Name Value="lazopenqbuilder_promet"/>
+    <Type Value="RunAndDesignTime"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\"/>
+      </SearchPaths>
+    </CompilerOptions>
+    <Files Count="7">
+      <Item1>
+        <Filename Value="qbabout.pas"/>
+        <UnitName Value="QBAbout"/>
+      </Item1>
+      <Item2>
+        <Filename Value="qbdbfrm.pas"/>
+        <UnitName Value="QBDBFrm"/>
+      </Item2>
+      <Item3>
+        <Filename Value="qbdbfrm2.pas"/>
+        <UnitName Value="QBDBFrm2"/>
+      </Item3>
+      <Item4>
+        <Filename Value="qbdirfrm.pas"/>
+        <UnitName Value="QBDirFrm"/>
+      </Item4>
+      <Item5>
+        <Filename Value="qbepromet.pas"/>
+        <UnitName Value="qbepromet"/>
+      </Item5>
+      <Item6>
+        <Filename Value="qblnkfrm.pas"/>
+        <UnitName Value="QBLnkFrm"/>
+      </Item6>
+      <Item7>
+        <Filename Value="qbuilder.pas"/>
+        <UnitName Value="QBuilder"/>
+      </Item7>
+    </Files>
+    <RequiredPkgs Count="2">
+      <Item1>
+        <PackageName Value="zcomponent"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="FCL"/>
+      </Item2>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>
