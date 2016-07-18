@@ -45,12 +45,11 @@ type
     function SelectDatabase: Boolean; override;
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   published
-    // ZEOS connection to be used
-    // Breaks backward compatibility: used to be DatabaseName
-    property Connection: TZConnection read FZEOSConnection write SetConnection;
   end;
 
 implementation
+
+uses uData,uZeosDBDM;
 
 { TOQBEngineZEOS }
 
@@ -94,6 +93,12 @@ begin
   inherited;
   FResultQuery := TZQuery.Create(Self);
   FResultQuery.AfterOpen := @FResultQueryAfterOpen;
+  if uData.Data is TZeosDBDM then
+    begin
+      FZEOSConnection := TZConnection(uData.Data.MainConnection);
+
+    end;
+  FResultQuery.Connection := FZEOSConnection;
 end;
 
 destructor TOQBEnginePromet.Destroy;
@@ -104,8 +109,6 @@ end;
 
 procedure TOQBEnginePromet.SetConnection(Value: TZConnection);
 begin
-  FZEOSConnection := Value;
-  FResultQuery.Connection := Value;
 end;
 
 function TOQBEnginePromet.SelectDatabase: Boolean;

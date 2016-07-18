@@ -476,6 +476,7 @@ begin
   FSQLgroupby := TStringList.Create;
   FSQLorderby := TStringList.Create;
   FUseTableAliases := True;
+  FDatabaseName:='';
 end;
 
 destructor TOQBEngine.Destroy;
