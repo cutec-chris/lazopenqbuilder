@@ -58,7 +58,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    function Execute: Boolean; virtual;
+    function Execute(Config : TStringList = nil): Boolean; virtual;
     property SQL: TStrings read FSQL;
     property SystemTables: Boolean read FSystemTables write FSystemTables default False;
     property Database: string read FDatabase write FDatabase;
@@ -66,7 +66,11 @@ type
     property OQBEngine: TOQBEngine read FOQBEngine write SetOQBEngine;
     property ShowButtons: TOQBbuttons read FShowButtons write FShowButtons
       default [bSelectDBDialog, bOpenDialog, bSaveDialog, bRunQuery, bSaveResultsDialog];
+    procedure SaveToStringList(StrList: TStringList);
+    procedure LoadFromStringList(StrList : TStringList);
   end;
+
+  { TOQBEngine }
 
   TOQBEngine = class(TComponent)
   private
@@ -258,6 +262,8 @@ type
     procedure _DragDrop(Sender, Source: TObject; X, Y: Integer);
   end;
 
+  { TOQBForm }
+
   TOQBForm = class(TForm)
     QBPanel: TPanel;
     Pages: TPageControl;
@@ -309,6 +315,7 @@ type
     btnOK: TToolButton;
     btnCancel: TToolButton;
     ToolButton6: TToolButton;
+    procedure FormCreate(Sender: TObject);
     procedure mnuFunctionClick(Sender: TObject);
     procedure mnuGroupClick(Sender: TObject);
     procedure mnuRemoveClick(Sender: TObject);
@@ -403,19 +410,27 @@ end;
 
 destructor TOQBuilderDialog.Destroy;
 begin
+  if Assigned(FOQBForm) then
+    begin
+      FOQBForm.Free;
+      FOQBForm := nil;
+    end;
   if FSQL <> nil then
     FSQL.Free;
   FOQBEngine := nil;
   inherited;
 end;
 
-function TOQBuilderDialog.Execute: Boolean;
+function TOQBuilderDialog.Execute(Config: TStringList): Boolean;
 begin
   Result := False;
-  if (not Assigned(FOQBForm)) and Assigned((FOQBEngine)) then
+  if ((not Assigned(FOQBForm)) or (not FOQBForm.Visible)) and Assigned((FOQBEngine)) then
   begin
-    TOQBForm(FOQBForm) := TOQBForm.Create(Application);
-    TOQBForm(FOQBForm).QBDialog := Self;
+    if not Assigned(FOQBForm) then
+      begin
+        TOQBForm(FOQBForm) := TOQBForm.Create(Application);
+        TOQBForm(FOQBForm).QBDialog := Self;
+      end;
     TOQBForm(FOQBForm).btnDB.Visible := bSelectDBDialog in FShowButtons;
     TOQBForm(FOQBForm).btnOpen.Visible := bOpenDialog in FShowButtons;
     TOQBForm(FOQBForm).btnSave.Visible := bSaveDialog in FShowButtons;
@@ -424,7 +439,7 @@ begin
     if OQBEngine.DatabaseName <> EmptyStr then
       TOQBForm(FOQBForm).OpenDatabase else
       TOQBForm(FOQBForm).SelectDatabase;
-
+    if Assigned(Config) then LoadFromStringList(Config);
     if TOQBForm(FOQBForm).ShowModal = mrOk then
     begin
       FSQL.Assign(TOQBForm(FOQBForm).MemoSQL.Lines);
@@ -432,9 +447,221 @@ begin
     end;
 
     OQBEngine.CloseResultQuery;
-    FOQBForm.Free;
-    FOQBForm := nil;
   end;
+end;
+
+procedure TOQBuilderDialog.SaveToStringList(StrList: TStringList);
+var
+  s: string;
+  i: Integer;
+  TempTable: TOQBTable;
+  j: Integer;
+  TempLink: TOQBLink;
+begin
+  with FOQBForm as TOQBForm do
+    begin
+      StrList.Add(QBSignature);
+      StrList.Add('# Don''t change this file !');
+      StrList.Add('[Options]');
+      if WindowState = wsMaximized then
+        s := '+' else
+        s := IntToStr(Top) + ',' + IntToStr(Left) + ',' + IntToStr(Height) + ',' +
+          IntToStr(Width) + ';';
+      StrList.Add(s);
+      s := IntToStr(Integer(btnTables.Down)) + ',' + IntToStr(QBTables.Width) +
+        ',' + IntToStr(Integer(btnPages.Down)) + ',' + IntToStr(Pages.Height) + ';';
+      StrList.Add(s);
+
+      StrList.Add('[Database]');
+      s := QBDialog.OQBEngine.DatabaseName + ',' + IntToStr(Integer(QBDialog.OQBEngine.ShowSystemTables)) + ';';
+      StrList.Add(s);
+      StrList.Add('[Tables]');  // save tables
+      for i := 0 to QBArea.ControlCount - 1 do
+        if QBArea.Controls[i] is TOQBTable then
+        begin
+          TempTable := TOQBTable(QBArea.Controls[i]);
+          s := TempTable.FTableName + ',' +
+            IntToStr(TempTable.Top + QBArea.VertScrollBar.ScrollPos) + ',' +
+            IntToStr(TempTable.Left + QBArea.HorzScrollBar.ScrollPos);
+          for j := 0 to TempTable.FLbx.Items.Count - 1 do
+            if TempTable.FLbx.Checked[j] then
+              s := s + ',1' else
+              s := s + ',0';
+          s := s + ';';
+          StrList.Add(s);
+        end;
+
+      StrList.Add('[Links]');   // save links
+      for i := 0 to QBArea.ControlCount - 1 do
+        if QBArea.Controls[i] is TOQBLink then
+        begin
+          TempLink := TOQBLink(QBArea.Controls[i]);
+          s := TempLink.Tbl1.FTableName + ',' + IntToStr(TempLink.FldN1) + ',' +
+            TempLink.Tbl2.FTableName + ',' + IntToStr(TempLink.FldN2) + ',' +
+            IntToStr(TempLink.FLinkOpt) + ',' + IntToStr(TempLink.FLinkType);
+          s := s + ';';
+          StrList.Add(s);
+        end;
+
+      StrList.Add('[Columns]');   // save columns
+      if not QBGrid.IsEmpty then
+        for i := 1 to QBGrid.ColCount - 1 do
+        begin
+          s := IntToStr(i) + ',' + QBGrid.Cells[i, cFld] + ',' + QBGrid.Cells[i, cTbl];
+          s := s + ',' + QBGrid.Cells[i, cShow] + ',' + QBGrid.Cells[i, cSort] +
+            ',' + QBGrid.Cells[i, cFunc] + ',' + QBGrid.Cells[i, cGroup];
+          s := s + ';';
+          StrList.Add(s);
+        end;
+
+      StrList.Add('[End]');   // end of QBuilder information
+    end;
+end;
+
+procedure TOQBuilderDialog.LoadFromStringList(StrList: TStringList);
+var
+  i, ii, j: Integer;
+  s, ss: string;
+  TempDatabaseName: string;
+  ShowSystemTables: Boolean;
+  NewTable: TOQBTable;
+  TableName: string;
+  X, Y: Integer;
+  NewLink: TOQBLink;
+  Table1, Table2: TOQBTable;
+  FieldN1, FieldN2: Integer;
+  ColField, ColTable: string;
+  aParams: TCreateParams;
+
+  function GetNextVal(var s: string): string;
+  var
+    p: Integer;
+  begin
+    Result := EmptyStr;
+    p := Pos(',', s);
+    if p = 0 then
+    begin
+      p := Pos(';', s);
+      if p = 0 then
+         Exit;
+    end;
+    Result := System.Copy(s, 1, p - 1);
+    System.Delete(s, 1, p);
+  end;
+begin
+  with FOQBForm as TOQBForm do
+    begin
+      j := -1;
+      if StrList.Count=0 then exit;
+      if StrList[0] <> QBSignature then
+      begin
+        ShowMessage('File is not QBuilder''s query file.');
+        StrList.Free;
+        Exit;
+      end;
+
+      ClearAll;
+      try
+        s := StrList[3];  // read options
+        if s = '+' then
+          WindowState := wsMaximized
+        else
+        begin
+          WindowState := wsNormal;
+          Top := StrToInt(GetNextVal(s));
+          Left := StrToInt(GetNextVal(s));
+          Height := StrToInt(GetNextVal(s));
+          Width := StrToInt(GetNextVal(s));
+        end;
+
+        s := StrList[4];
+        btnTables.Down := Boolean(StrToInt(GetNextVal(s)));
+        VSplitter.Visible := btnTables.Down;
+        QBTables.Visible := btnTables.Down;
+        QBTables.Width := StrToInt(GetNextVal(s));
+        btnPages.Down := Boolean(StrToInt(GetNextVal(s)));
+        HSplitter.Visible := btnPages.Down;
+        Pages.Visible := btnPages.Down;
+        Pages.Height := StrToInt(GetNextVal(s));
+
+        s := StrList[6];  // read database
+        TempDatabaseName := GetNextVal(s);
+        ShowSystemTables := Boolean(StrToInt(GetNextVal(s)));
+
+        QBDialog.OQBEngine.DatabaseName := TempDatabaseName;
+        QBDialog.OQBEngine.ShowSystemTables := ShowSystemTables;
+        OpenDatabase;
+
+        for i := 8 to StrList.Count - 1 do  // read tables
+        begin
+          if StrList[i] = '[Links]' then
+          begin
+            j := i + 1;
+            Break;
+          end;
+          s := StrList[i];
+          TableName := GetNextVal(s);
+          Y := StrToInt(GetNextVal(s));
+          X := StrToInt(GetNextVal(s));
+          NewTable := TOQBTable.Create(Self);
+          NewTable.Parent := QBArea;
+          try
+            NewTable.Activate(TableName, X, Y);
+            NewTable.FLbx.FLoading := True;
+            for ii := 0 to NewTable.FLbx.Items.Count - 1 do
+            begin
+              ss := GetNextVal(s);
+              if ss <> EmptyStr then
+                NewTable.FLbx.Checked[ii] := Boolean(StrToInt(ss));
+            end;
+            NewTable.FLbx.FLoading := False;
+          except
+            NewTable.Free;
+          end;
+        end;
+
+        if j <> -1 then
+          for i := j to StrList.Count - 1 do  // read links
+          begin
+            if StrList[i] = '[Columns]' then
+            begin
+              j := i + 1;
+              Break;
+            end;
+            s := StrList[i];
+            ss := GetNextVal(s);
+            Table1 := QBArea.FindTable(ss);
+            ss := GetNextVal(s);
+            FieldN1 := StrToInt(ss);
+            ss := GetNextVal(s);
+            Table2 := QBArea.FindTable(ss);
+            ss := GetNextVal(s);
+            FieldN2 := StrToInt(ss);
+            NewLink := QBArea.InsertLink(Table1, Table2, FieldN1, FieldN2);
+            ss := GetNextVal(s);
+            NewLink.FLinkOpt := StrToInt(ss);
+            ss := GetNextVal(s);
+            NewLink.FLinkType := StrToInt(ss);
+          end;
+
+        if j <> -1 then
+          for i := j to StrList.Count - 1 do  // read columns
+          begin
+            if StrList[i] = '[End]' then
+              Break;
+            s := StrList[i];
+            ii := StrToInt(GetNextVal(s));
+            ColField := GetNextVal(s);
+            ColTable := GetNextVal(s);
+            QBGrid.Insert(ii, ColField, ColTable);
+            QBGrid.Cells[ii, cShow] := GetNextVal(s);
+            QBGrid.Cells[ii, cSort] := GetNextVal(s);
+            QBGrid.Cells[ii, cFunc] := GetNextVal(s);
+            QBGrid.Cells[ii, cGroup] := GetNextVal(s);
+          end;
+      finally
+      end;
+    end;
 end;
 
 procedure TOQBuilderDialog.Notification(AComponent: TComponent;
@@ -628,7 +855,6 @@ begin
 
   Result := SQL.Text;
 end;
-
 
 { TOQBLbx }
 
@@ -1871,17 +2097,6 @@ end;
 procedure TOQBForm.CreateParams(var Params: TCreateParams);
 begin
   inherited;
-  QBArea := TOQBArea.Create(Self);
-  QBArea.Parent := QBPanel;
-  QBArea.Align := alClient;
-  QBArea.Color := $009E9E9E;
-  QBGrid := TOQBGrid.Create(Self);
-  QBGrid.DefaultRowHeight := 22;
-  QBGrid.DefaultColWidth := 150;
-  QBGrid.Parent := TabColumns;
-  QBGrid.Align := alClient;
-  VSplitter.Tag := VSplitter.Left;
-  HSplitter.Tag := HSplitter.Top;
   Application.ProcessMessages;
 end;
 
@@ -1898,6 +2113,22 @@ begin
       QBGrid.Cells[QBGrid.CurrCol, cFunc] := sFunc[Item.Tag];
     end;
   end;
+end;
+
+procedure TOQBForm.FormCreate(Sender: TObject);
+begin
+  QBArea := TOQBArea.Create(Self);
+  QBGrid := TOQBGrid.Create(Self);
+  QBGrid.TitleStyle:=tsNative;
+  QBArea.Parent := QBPanel;
+  QBArea.Align := alClient;
+  QBArea.Color := clWindow;
+  QBGrid.DefaultRowHeight := 22;
+  QBGrid.DefaultColWidth := 150;
+  QBGrid.Parent := TabColumns;
+  QBGrid.Align := alClient;
+  VSplitter.Tag := VSplitter.Left;
+  HSplitter.Tag := HSplitter.Top;
 end;
 
 procedure TOQBForm.mnuGroupClick(Sender: TObject);
@@ -1982,151 +2213,14 @@ end;
 
 procedure TOQBForm.btnOpenClick(Sender: TObject);
 var
-  i, ii, j: Integer;
-  s, ss: string;
-  TempDatabaseName: string;
-  ShowSystemTables: Boolean;
-  NewTable: TOQBTable;
-  TableName: string;
-  X, Y: Integer;
-  NewLink: TOQBLink;
-  Table1, Table2: TOQBTable;
-  FieldN1, FieldN2: Integer;
-  ColField, ColTable: string;
   StrList: TStringList;
-
-  function GetNextVal(var s: string): string;
-  var
-    p: Integer;
-  begin
-    Result := EmptyStr;
-    p := Pos(',', s);
-    if p = 0 then
-    begin
-      p := Pos(';', s);
-      if p = 0 then
-         Exit;
-    end;
-    Result := System.Copy(s, 1, p - 1);
-    System.Delete(s, 1, p);
-  end;
-
 begin
-  j := -1;
   if not DlgOpen.Execute then
     Exit;
   StrList := TStringList.Create;
   StrList.LoadFromFile(DlgOpen.FileName);
-  if StrList[0] <> QBSignature then
-  begin
-    ShowMessage('File ' + DlgOpen.FileName + ' is not QBuilder''s query file.');
-    StrList.Free;
-    Exit;
-  end;
-
-  ClearAll;
-  try
-    s := StrList[3];  // read options
-    if s = '+' then
-      WindowState := wsMaximized
-    else
-    begin
-      WindowState := wsNormal;
-      Top := StrToInt(GetNextVal(s));
-      Left := StrToInt(GetNextVal(s));
-      Height := StrToInt(GetNextVal(s));
-      Width := StrToInt(GetNextVal(s));
-    end;
-
-    s := StrList[4];
-    btnTables.Down := Boolean(StrToInt(GetNextVal(s)));
-    VSplitter.Visible := btnTables.Down;
-    QBTables.Visible := btnTables.Down;
-    QBTables.Width := StrToInt(GetNextVal(s));
-    btnPages.Down := Boolean(StrToInt(GetNextVal(s)));
-    HSplitter.Visible := btnPages.Down;
-    Pages.Visible := btnPages.Down;
-    Pages.Height := StrToInt(GetNextVal(s));
-
-    s := StrList[6];  // read database
-    TempDatabaseName := GetNextVal(s);
-    ShowSystemTables := Boolean(StrToInt(GetNextVal(s)));
-
-    QBDialog.OQBEngine.DatabaseName := TempDatabaseName;
-    QBDialog.OQBEngine.ShowSystemTables := ShowSystemTables;
-    OpenDatabase;
-
-    for i := 8 to StrList.Count - 1 do  // read tables
-    begin
-      if StrList[i] = '[Links]' then
-      begin
-        j := i + 1;
-        Break;
-      end;
-      s := StrList[i];
-      TableName := GetNextVal(s);
-      Y := StrToInt(GetNextVal(s));
-      X := StrToInt(GetNextVal(s));
-      NewTable := TOQBTable.Create(Self);
-      NewTable.Parent := QBArea;
-      try
-        NewTable.Activate(TableName, X, Y);
-        NewTable.FLbx.FLoading := True;
-        for ii := 0 to NewTable.FLbx.Items.Count - 1 do
-        begin
-          ss := GetNextVal(s);
-          if ss <> EmptyStr then
-            NewTable.FLbx.Checked[ii] := Boolean(StrToInt(ss));
-        end;
-        NewTable.FLbx.FLoading := False;
-      except
-        NewTable.Free;
-      end;
-    end;
-
-    if j <> -1 then
-      for i := j to StrList.Count - 1 do  // read links
-      begin
-        if StrList[i] = '[Columns]' then
-        begin
-          j := i + 1;
-          Break;
-        end;
-        s := StrList[i];
-        ss := GetNextVal(s);
-        Table1 := QBArea.FindTable(ss);
-        ss := GetNextVal(s);
-        FieldN1 := StrToInt(ss);
-        ss := GetNextVal(s);
-        Table2 := QBArea.FindTable(ss);
-        ss := GetNextVal(s);
-        FieldN2 := StrToInt(ss);
-        NewLink := QBArea.InsertLink(Table1, Table2, FieldN1, FieldN2);
-        ss := GetNextVal(s);
-        NewLink.FLinkOpt := StrToInt(ss);
-        ss := GetNextVal(s);
-        NewLink.FLinkType := StrToInt(ss);
-      end;
-
-    if j <> -1 then
-      for i := j to StrList.Count - 1 do  // read columns
-      begin
-        if StrList[i] = '[End]' then
-          Break;
-        s := StrList[i];
-        ii := StrToInt(GetNextVal(s));
-        ColField := GetNextVal(s);
-        ColTable := GetNextVal(s);
-        QBGrid.Insert(ii, ColField, ColTable);
-        QBGrid.Cells[ii, cShow] := GetNextVal(s);
-        QBGrid.Cells[ii, cSort] := GetNextVal(s);
-        QBGrid.Cells[ii, cFunc] := GetNextVal(s);
-        QBGrid.Cells[ii, cGroup] := GetNextVal(s);
-      end;
-
-  finally
-    StrList.Free;
-  end;
+  QBDialog.LoadFromStringList(Strlist);
+  StrList.Free;
 end;
 
 procedure TOQBForm.btnSaveClick(Sender: TObject);
@@ -2139,63 +2233,7 @@ var
 begin
   if not DlgSave.Execute then Exit;
   StrList := TStringList.Create;
-  StrList.Add(QBSignature);
-  StrList.Add('# Don''t change this file !');
-  StrList.Add('[Options]');
-  if WindowState = wsMaximized then
-    s := '+' else
-    s := IntToStr(Top) + ',' + IntToStr(Left) + ',' + IntToStr(Height) + ',' +
-      IntToStr(Width) + ';';
-  StrList.Add(s);
-  s := IntToStr(Integer(btnTables.Down)) + ',' + IntToStr(QBTables.Width) +
-    ',' + IntToStr(Integer(btnPages.Down)) + ',' + IntToStr(Pages.Height) + ';';
-  StrList.Add(s);
-
-  StrList.Add('[Database]');
-  s := QBDialog.OQBEngine.DatabaseName + ',' + IntToStr(Integer(QBDialog.OQBEngine.ShowSystemTables)) + ';';
-  StrList.Add(s);
-
-  StrList.Add('[Tables]');  // save tables
-  for i := 0 to QBArea.ControlCount - 1 do
-    if QBArea.Controls[i] is TOQBTable then
-    begin
-      TempTable := TOQBTable(QBArea.Controls[i]);
-      s := TempTable.FTableName + ',' +
-        IntToStr(TempTable.Top + QBArea.VertScrollBar.ScrollPos) + ',' +
-        IntToStr(TempTable.Left + QBArea.HorzScrollBar.ScrollPos);
-      for j := 0 to TempTable.FLbx.Items.Count - 1 do
-        if TempTable.FLbx.Checked[j] then
-          s := s + ',1' else
-          s := s + ',0';
-      s := s + ';';
-      StrList.Add(s);
-    end;
-
-  StrList.Add('[Links]');   // save links
-  for i := 0 to QBArea.ControlCount - 1 do
-    if QBArea.Controls[i] is TOQBLink then
-    begin
-      TempLink := TOQBLink(QBArea.Controls[i]);
-      s := TempLink.Tbl1.FTableName + ',' + IntToStr(TempLink.FldN1) + ',' +
-        TempLink.Tbl2.FTableName + ',' + IntToStr(TempLink.FldN2) + ',' +
-        IntToStr(TempLink.FLinkOpt) + ',' + IntToStr(TempLink.FLinkType);
-      s := s + ';';
-      StrList.Add(s);
-    end;
-
-  StrList.Add('[Columns]');   // save columns
-  if not QBGrid.IsEmpty then
-    for i := 1 to QBGrid.ColCount - 1 do
-    begin
-      s := IntToStr(i) + ',' + QBGrid.Cells[i, cFld] + ',' + QBGrid.Cells[i, cTbl];
-      s := s + ',' + QBGrid.Cells[i, cShow] + ',' + QBGrid.Cells[i, cSort] +
-        ',' + QBGrid.Cells[i, cFunc] + ',' + QBGrid.Cells[i, cGroup];
-      s := s + ';';
-      StrList.Add(s);
-    end;
-
-  StrList.Add('[End]');   // end of QBuilder information
-
+  QBDialog.SaveToStringList(StrList);
   StrList.SaveToFile(DlgSave.FileName);
   StrList.Free;
 end;
