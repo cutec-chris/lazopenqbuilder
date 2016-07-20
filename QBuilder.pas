@@ -75,6 +75,7 @@ type
   TOQBEngine = class(TComponent)
   private
     FDatabaseName: string;
+    FNameQuote: char;
     FUserName: string;
     FPassword: string;
     FShowSystemTables: Boolean;
@@ -91,6 +92,7 @@ type
     FSQLorderby: TStringList;
     FUseTableAliases: Boolean;
     FOQBDialog: TOQBuilderDialog;
+    FValueQuote: char;
     procedure SetShowSystemTables(const Value: Boolean);
   protected
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
@@ -102,6 +104,7 @@ type
     // Read list of tables (system tables etc) into FTableList
     procedure ReadTableList; virtual; abstract;
     procedure ReadFieldList(const ATableName: string); virtual; abstract;
+    function QuoteField(aName : string) : string;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -130,6 +133,8 @@ type
     property DatabaseName: string read FDatabaseName write SetDatabaseName;
     property ShowSystemTables: Boolean read FShowSystemTables write SetShowSystemTables default False;
     property UseTableAliases: Boolean read FUseTableAliases write FUseTableAliases default True;
+    property NameQuote : char read FNameQuote write FNameQuote;
+    property ValueQuote : char read FValueQuote write FValueQuote;
   end;
 
 type
@@ -704,6 +709,8 @@ begin
   FSQLorderby := TStringList.Create;
   FUseTableAliases := True;
   FDatabaseName:='';
+  FNameQuote:='"';
+  FValueQuote:='''';
 end;
 
 destructor TOQBEngine.Destroy;
@@ -777,6 +784,11 @@ begin
       FAliasList.Add(s1);
     end;
   end;
+end;
+
+function TOQBEngine.QuoteField(aName: string): string;
+begin
+  Result := FNameQuote+aName+FNameQuote;
 end;
 
 function TOQBEngine.GenerateSQL: string;
@@ -2333,16 +2345,16 @@ begin
             tbl1 := QBDialog.OQBEngine.AliasList[QBDialog.OQBEngine.TableList.IndexOf(Cells[i, cTbl])]
           else
             tbl1 := Cells[i, cTbl];
-          s := tbl1 + '.' + Cells[i, cFld];
-          Lst.Add(LowerCase(s));
+          s := QBDialog.OQBEngine.QuoteField(tbl1) + '.' + QBDialog.OQBEngine.QuoteField(Cells[i, cFld]);
+          Lst.Add(s);
           if Cells[i, cFunc] <> EmptyStr then
             s := UpperCase(Cells[i, cFunc]) else
             s := EmptyStr;
           if QBDialog.OQBEngine.UseTableAliases then
-            QBDialog.OQBEngine.SQLcolumns_table.Add(LowerCase(
-              QBDialog.OQBEngine.AliasList[QBDialog.OQBEngine.TableList.IndexOf(Cells[i, cTbl])]))
+            QBDialog.OQBEngine.SQLcolumns_table.Add(
+              QBDialog.OQBEngine.AliasList[QBDialog.OQBEngine.TableList.IndexOf(Cells[i, cTbl])])
           else
-            QBDialog.OQBEngine.SQLcolumns_table.Add(LowerCase(Cells[i, cTbl]));
+            QBDialog.OQBEngine.SQLcolumns_table.Add(Cells[i, cTbl]);
           QBDialog.OQBEngine.SQLcolumns_func.Add(s);
         end;
 
@@ -2369,28 +2381,28 @@ begin
           begin
             if QBDialog.OQBEngine.UseTableAliases then
             begin
-              tbl1 := LowerCase(Link.Tbl1.FTableAlias);
-              tbl2 := LowerCase(Link.Tbl2.FTableAlias);
+              tbl1 := QBDialog.OQBEngine.QuoteField(Link.Tbl1.FTableAlias);
+              tbl2 := QBDialog.OQBEngine.QuoteField(Link.Tbl2.FTableAlias);
             end
             else
             begin
-              tbl1 := LowerCase(Link.Tbl1.FTableName);
-              tbl2 := LowerCase(Link.Tbl2.FTableName);
+              tbl1 := QBDialog.OQBEngine.QuoteField(Link.Tbl1.FTableName);
+              tbl2 := QBDialog.OQBEngine.QuoteField(Link.Tbl2.FTableName);
             end;
             if Lst1.IndexOf(tbl1) = -1 then
               Lst1.Add(tbl1);
             if Lst1.IndexOf(tbl2) = -1 then
               Lst1.Add(tbl2);
             if QBDialog.OQBEngine.UseTableAliases then
-              Lst2.Add(LowerCase(Link.Tbl1.FTableName) + ' ' + tbl1 +
+              Lst2.Add(QBDialog.OQBEngine.QuoteField(Link.Tbl1.FTableName) + ' ' + tbl1 +
                 sOuterJoin[Link.FLinkType] +
-                LowerCase(Link.Tbl2.FTableName) + ' ' + tbl2 + ' ON ' +
-                tbl1 + '.' + LowerCase(Link.FldNam1) + sLinkOpt[Link.FLinkOpt] +
-                tbl2 + '.' + LowerCase(Link.FldNam2))
+                QBDialog.OQBEngine.QuoteField(Link.Tbl2.FTableName) + ' ' + tbl2 + ' ON ' +
+                tbl1 + '.' + QBDialog.OQBEngine.QuoteField(Link.FldNam1) + sLinkOpt[Link.FLinkOpt] +
+                tbl2 + '.' + QBDialog.OQBEngine.QuoteField(Link.FldNam2))
             else
               Lst2.Add(tbl1 + sOuterJoin[Link.FLinkType] + tbl2 + ' ON ' +
-                tbl1 + '.' + LowerCase(Link.FldNam1) +
-                sLinkOpt[Link.FLinkOpt] + tbl2 + '.' + LowerCase(Link.FldNam2));
+                tbl1 + '.' + QBDialog.OQBEngine.QuoteField(Link.FldNam1) +
+                sLinkOpt[Link.FLinkOpt] + tbl2 + '.' + QBDialog.OQBEngine.QuoteField(Link.FldNam2));
           end;
         end;
 
@@ -2398,11 +2410,11 @@ begin
         if Controls[i] is TOQBTable then
         begin
           if QBDialog.OQBEngine.UseTableAliases then
-            tbl1 := LowerCase(TOQBTable(Controls[i]).FTableAlias) else
-            tbl1 := LowerCase(TOQBTable(Controls[i]).FTableName);
+            tbl1 := QBDialog.OQBEngine.QuoteField(TOQBTable(Controls[i]).FTableAlias) else
+            tbl1 := QBDialog.OQBEngine.QuoteField(TOQBTable(Controls[i]).FTableName);
           if (Lst.IndexOf(tbl1) = -1) and (Lst1.IndexOf(tbl1) = -1) then
             if QBDialog.OQBEngine.UseTableAliases then
-              Lst.Add(LowerCase(TOQBTable(Controls[i]).FTableName) + ' ' + tbl1) else
+              Lst.Add(QBDialog.OQBEngine.QuoteField(TOQBTable(Controls[i]).FTableName) + ' ' + tbl1) else
               Lst.Add(tbl1);
         end;
 
@@ -2424,13 +2436,13 @@ begin
           if Link.FLinkType = 0 then
           begin
             if QBDialog.OQBEngine.UseTableAliases then
-              s := Link.tbl1.FTableAlias + '.' + Link.fldNam1 + sLinkOpt[Link.FLinkOpt] +
-                Link.tbl2.FTableAlias + '.' + Link.fldNam2
+              s := QBDialog.OQBEngine.QuoteField(Link.tbl1.FTableAlias) + '.' + QBDialog.OQBEngine.QuoteField(Link.fldNam1) + sLinkOpt[Link.FLinkOpt] +
+                QBDialog.OQBEngine.QuoteField(Link.tbl2.FTableAlias) + '.' + QBDialog.OQBEngine.QuoteField(Link.fldNam2)
             else
-              s := Link.tbl1.FTableName + '.' + Link.fldNam1 + sLinkOpt[Link.FLinkOpt] +
-                Link.tbl2.FTableName + '.' + Link.fldNam2;
+              s := QBDialog.OQBEngine.QuoteField(Link.tbl1.FTableName) + '.' + QBDialog.OQBEngine.QuoteField(Link.fldNam1) + sLinkOpt[Link.FLinkOpt] +
+                QBDialog.OQBEngine.QuoteField(Link.tbl2.FTableName) + '.' + QBDialog.OQBEngine.QuoteField(Link.fldNam2);
 
-            Lst.Add(LowerCase(s));
+            Lst.Add(s);
           end;
         end;
       QBDialog.OQBEngine.SQLwhere.Assign(Lst);
@@ -2448,8 +2460,8 @@ begin
             tbl1 := QBDialog.OQBEngine.AliasList[QBDialog.OQBEngine.TableList.IndexOf(Cells[i, cTbl])]
           else
             tbl1 := Cells[i, cTbl];
-          s := tbl1 + '.' + Cells[i, cFld];
-          Lst.Add(LowerCase(s));
+          s := QBDialog.OQBEngine.QuoteField(tbl1) + '.' + QBDialog.OQBEngine.QuoteField(Cells[i, cFld]);
+          Lst.Add(s);
         end;
       end;
       QBDialog.OQBEngine.SQLgroupby.Assign(Lst);
@@ -2469,7 +2481,7 @@ begin
             tbl1 := Cells[i, cTbl];
           // --- to order result set by the result of an aggregate function
           if Cells[i, cFunc] = EmptyStr then
-            s := LowerCase(tbl1 + '.' + Cells[i, cFld]) else
+            s := QBDialog.OQBEngine.QuoteField(tbl1) + '.' + QBDialog.OQBEngine.QuoteField(Cells[i, cFld]) else
             s := IntToStr(i);
           // ---
 
