@@ -93,6 +93,7 @@ begin
   inherited;
   FResultQuery := TZQuery.Create(Self);
   FResultQuery.AfterOpen := @FResultQueryAfterOpen;
+  FResultQuery.FetchRow:=20;
   if uData.Data is TZeosDBDM then
     begin
       FZEOSConnection := TZConnection(uData.Data.MainConnection);
