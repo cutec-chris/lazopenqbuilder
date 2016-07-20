@@ -59,13 +59,13 @@ object OQBForm: TOQBForm
       end
       object TabSQL: TTabSheet
         Caption = 'SQL'
-        ClientHeight = 127
-        ClientWidth = 563
+        ClientHeight = 129
+        ClientWidth = 989
         object MemoSQL: TMemo
           Left = 0
-          Height = 127
+          Height = 129
           Top = 0
-          Width = 547
+          Width = 989
           Align = alClient
           Font.Color = clWindowText
           Font.Height = -11
@@ -77,13 +77,13 @@ object OQBForm: TOQBForm
       end
       object TabResults: TTabSheet
         Caption = 'Results'
-        ClientHeight = 127
-        ClientWidth = 563
+        ClientHeight = 129
+        ClientWidth = 989
         object ResDBGrid: TDBGrid
           Left = 0
-          Height = 127
+          Height = 129
           Top = 0
-          Width = 547
+          Width = 989
           Align = alClient
           Color = clWindow
           Columns = <>
@@ -93,6 +93,7 @@ object OQBForm: TOQBForm
           TitleFont.Color = clWindowText
           TitleFont.Height = -11
           TitleFont.Name = 'Tahoma'
+          TitleStyle = tsNative
         end
       end
     end
