@@ -68,6 +68,7 @@ type
       default [bSelectDBDialog, bOpenDialog, bSaveDialog, bRunQuery, bSaveResultsDialog];
     procedure SaveToStringList(StrList: TStringList);
     procedure LoadFromStringList(StrList : TStringList);
+    function generateSQL : string;
   end;
 
   { TOQBEngine }
@@ -669,6 +670,12 @@ begin
     end;
 end;
 
+function TOQBuilderDialog.generateSQL: string;
+begin
+  TOQBForm(FOQBForm).btnSQL.Click;
+  Result := FOQBEngine.GenerateSQL;
+end;
+
 procedure TOQBuilderDialog.Notification(AComponent: TComponent;
   Operation: TOperation);
 begin
@@ -796,6 +803,7 @@ var
   s: string;
   i: Integer;
 begin
+
   SQL.Clear;
 
   s := 'SELECT  ';
