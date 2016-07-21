@@ -121,13 +121,11 @@ procedure TOQBEnginePromet.ReadTableList;
 var
   vTypesTables: TStringDynArray;
 begin
-  SetLength(vTypesTables,2);
+  SetLength(vTypesTables,1);
   vTypesTables[0] := 'TABLE';
-  vTypesTables[1] := 'VIEW';
   if ShowSystemTables then begin
-    SetLength(vTypesTables,3);
+    SetLength(vTypesTables,2);
     vTypesTables[0] := 'TABLE';
-    vTypesTables[1] := 'VIEW';
     vTypesTables[2] := 'SYSTEM TABLE';
   end;
   TableList.Clear;
