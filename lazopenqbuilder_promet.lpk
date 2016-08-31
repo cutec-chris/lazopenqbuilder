@@ -11,45 +11,41 @@
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
     </CompilerOptions>
-    <Files Count="7">
+    <Files Count="6">
       <Item1>
-        <Filename Value="qbabout.pas"/>
-        <UnitName Value="QBAbout"/>
-      </Item1>
-      <Item2>
         <Filename Value="qbdbfrm.pas"/>
         <UnitName Value="QBDBFrm"/>
-      </Item2>
-      <Item3>
+      </Item1>
+      <Item2>
         <Filename Value="qbdbfrm2.pas"/>
         <UnitName Value="QBDBFrm2"/>
-      </Item3>
-      <Item4>
+      </Item2>
+      <Item3>
         <Filename Value="qbdirfrm.pas"/>
         <UnitName Value="QBDirFrm"/>
-      </Item4>
-      <Item5>
+      </Item3>
+      <Item4>
         <Filename Value="qbepromet.pas"/>
         <UnitName Value="qbepromet"/>
-      </Item5>
-      <Item6>
+      </Item4>
+      <Item5>
         <Filename Value="qblnkfrm.pas"/>
         <UnitName Value="QBLnkFrm"/>
-      </Item6>
-      <Item7>
+      </Item5>
+      <Item6>
         <Filename Value="qbuilder.pas"/>
         <UnitName Value="QBuilder"/>
-      </Item7>
+      </Item6>
     </Files>
     <RequiredPkgs Count="4">
       <Item1>
-        <PackageName Value="promet_dblayer_zeos"/>
+        <PackageName Value="LCL"/>
       </Item1>
       <Item2>
-        <PackageName Value="pPrometDBIntfs"/>
+        <PackageName Value="promet_dblayer_zeos"/>
       </Item2>
       <Item3>
-        <PackageName Value="zcomponent"/>
+        <PackageName Value="pPrometDBIntfs"/>
       </Item3>
       <Item4>
         <PackageName Value="FCL"/>
