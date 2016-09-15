@@ -7,7 +7,7 @@ unit lazopenqbuilder_promet;
 interface
 
 uses
-  QBAbout, QBDBFrm, QBDBFrm2, QBDirFrm, qbepromet, QBLnkFrm, QBuilder, 
+  QBDBFrm, QBDBFrm2, QBDirFrm, qbepromet, QBLnkFrm, QBuilder, 
   LazarusPackageIntf;
 
 implementation
