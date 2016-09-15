@@ -1,15 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <CONFIG>
-  <Package Version="4">
+  <Package Version="3">
     <PathDelim Value="\"/>
     <Name Value="lazopenqbuilder_promet"/>
-    <Type Value="RunAndDesignTime"/>
     <CompilerOptions>
-      <Version Value="11"/>
+      <Version Value="9"/>
       <PathDelim Value="\"/>
       <SearchPaths>
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
+      <Other>
+        <CompilerPath Value="$(CompPath)"/>
+      </Other>
     </CompilerOptions>
     <Files Count="6">
       <Item1>
@@ -37,15 +39,18 @@
         <UnitName Value="QBuilder"/>
       </Item6>
     </Files>
+    <Type Value="RunAndDesignTime"/>
     <RequiredPkgs Count="4">
       <Item1>
         <PackageName Value="LCL"/>
       </Item1>
       <Item2>
         <PackageName Value="promet_dblayer_zeos"/>
+        <DefaultFilename Value="..\..\base\dblayer_zeos\promet_dblayer_zeos.lpk"/>
       </Item2>
       <Item3>
         <PackageName Value="pPrometDBIntfs"/>
+        <DefaultFilename Value="..\..\base\dbintfs\pprometdbintfs.lpk"/>
       </Item3>
       <Item4>
         <PackageName Value="FCL"/>
