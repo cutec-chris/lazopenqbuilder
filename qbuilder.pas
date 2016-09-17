@@ -351,7 +351,7 @@ type
 
 implementation
 
-{$R QBBUTTON.RES}
+{$R qbbutton.res}
 
 uses
   QBLnkFrm, QBAbout;
