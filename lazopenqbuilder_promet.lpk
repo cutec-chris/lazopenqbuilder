@@ -14,15 +14,15 @@
     </CompilerOptions>
     <Files Count="6">
       <Item1>
-        <Filename Value="QBDBFrm.pas"/>
+        <Filename Value="qbdbfrm.pas"/>
         <UnitName Value="QBDBFrm"/>
       </Item1>
       <Item2>
-        <Filename Value="QBDBFrm2.pas"/>
+        <Filename Value="qbdbfrm2.pas"/>
         <UnitName Value="QBDBFrm2"/>
       </Item2>
       <Item3>
-        <Filename Value="QBDirFrm.pas"/>
+        <Filename Value="qbdirfrm.pas"/>
         <UnitName Value="QBDirFrm"/>
       </Item3>
       <Item4>
@@ -30,11 +30,11 @@
         <UnitName Value="qbepromet"/>
       </Item4>
       <Item5>
-        <Filename Value="QBLnkFrm.pas"/>
+        <Filename Value="qblnkfrm.pas"/>
         <UnitName Value="QBLnkFrm"/>
       </Item5>
       <Item6>
-        <Filename Value="QBuilder.pas"/>
+        <Filename Value="qbuilder.pas"/>
         <UnitName Value="QBuilder"/>
       </Item6>
     </Files>
