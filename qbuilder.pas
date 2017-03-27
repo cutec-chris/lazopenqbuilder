@@ -32,7 +32,7 @@ interface
 uses
   SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   Buttons, ExtCtrls, StdCtrls, ComCtrls, Menus, CheckLst, Grids,
-  DB, DBGrids, LMessages, LCLIntf, LCLType, LCLProc,
+  DB, DBGrids, LMessages, LCLIntf, LCLType, LCLProc,LCLPlatformDef,
   GraphType, InterfaceBase;
 
 type
