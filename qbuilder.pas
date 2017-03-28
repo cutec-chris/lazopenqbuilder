@@ -32,8 +32,8 @@ interface
 uses
   SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   Buttons, ExtCtrls, StdCtrls, ComCtrls, Menus, CheckLst, Grids,
-  DB, DBGrids, LMessages, LCLIntf, LCLType, LCLProc,LCLPlatformDef,
-  GraphType, InterfaceBase;
+  DB, DBGrids, LMessages, LCLIntf, LCLType, LCLProc,
+  GraphType, InterfaceBase,LCLVersion;
 
 type
   TOQBbutton = (bSelectDBDialog, bOpenDialog, bSaveDialog,
@@ -354,7 +354,11 @@ implementation
 {$R qbbutton.res}
 
 uses
-  QBLnkFrm, QBAbout;
+  QBLnkFrm, QBAbout
+  {$IF (LCL_MAJOR > 0) and (LCL_MINOR > 5)}
+  ,LCLPlatformDef
+  {$endif}
+  ;
 
   {$R *.lfm}
 
