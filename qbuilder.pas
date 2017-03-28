@@ -355,7 +355,7 @@ implementation
 
 uses
   QBLnkFrm, QBAbout
-  {$IF (LCL_MAJOR > 0) and (LCL_MINOR > 5)}
+  {$IF (LCL_MAJOR > 0) and (LCL_MINOR > 6)}
   ,LCLPlatformDef
   {$endif}
   ;
