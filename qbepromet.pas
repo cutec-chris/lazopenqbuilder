@@ -94,7 +94,7 @@ begin
   FResultQuery := TZQuery.Create(Self);
   FResultQuery.AfterOpen := @FResultQueryAfterOpen;
   FResultQuery.FetchRow:=20;
-  if uData.Data is TZeosDBDM then
+  if TComponent(uData.Data.MainConnection) is TZConnection then
     begin
       FZEOSConnection := TZConnection(uData.Data.MainConnection);
 
